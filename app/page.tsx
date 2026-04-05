@@ -3,12 +3,12 @@ import Link from "next/link";
 const features = [
   {
     icon: "📸",
-    title: "Загрузи фото",
-    desc: "4 ракурса — перед, бок, спина, расслабленная поза. Мы не храним фото после анализа.",
+    title: "Загрузи до 4 фото",
+    desc: "Несколько ракурсов — перед, бок, спина, расслабленная поза. Чем больше - тем точнее результат",
   },
   {
     icon: "🧠",
-    title: "AI-анализ тела",
+    title: "ИИ анализ тела",
     desc: "Нейросеть оценивает пропорции, процент жира, мышечный баланс и симметрию.",
   },
   {
@@ -110,7 +110,7 @@ export default function Home() {
           </div>
 
           <p className="mt-6 text-sm text-gray-500">
-            3 бесплатных оценки в неделю • Фото не сохраняются
+            До 3 оценок в неделю • Фото под защитой
           </p>
         </div>
       </section>
@@ -243,8 +243,8 @@ export default function Home() {
               Оставь email — отправим приглашение в бету
             </p>
             <form
-              className="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto"
-              action="https://formspree.io/f/YOUR_FORM_ID"
+              className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mx-auto"
+              action="https://formspree.io/f/mzdkknwg"
               method="POST"
             >
               <input
@@ -252,11 +252,11 @@ export default function Home() {
                 name="email"
                 required
                 placeholder="your@email.com"
-                className="flex-1 px-4 py-3.5 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition"
+                className="min-w-0 flex-1 px-4 py-3.5 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition"
               />
               <button
                 type="submit"
-                className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold transition whitespace-nowrap"
+                className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold transition shrink-0 cursor-pointer"
               >
                 Получить доступ
               </button>
