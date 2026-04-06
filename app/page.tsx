@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 const features = [
   {
     icon: "📸",
     title: "Загрузи до 4 фото",
-    desc: "Несколько ракурсов — перед, бок, спина, расслабленная поза. Чем больше - тем точнее результат",
+    desc: "Несколько ракурсов — перед, бок, спина, расслабленная поза. Чем больше - тем точнее результат.",
   },
   {
     icon: "🧠",
@@ -42,6 +45,41 @@ const metrics = [
 ];
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("loading");
+
+    // ===== ВСТАВЬ СВОИ ДАННЫЕ СЮДА =====
+    const BOT_TOKEN = "8214322244:AAGec2Nf3Gq5p6RaLlAm0hLNfnknwVrh6tw"; // Пример: "7123456789:AAGk..."
+    const CHAT_ID = "544250196";   // Пример: "123456789"
+    // ====================================
+
+    const text = `🔥 Новая заявка в Телометр!\nEmail: ${email}`;
+
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: text,
+        }),
+      });
+
+      if (response.ok) {
+        setStatus("success");
+        setEmail("");
+      } else {
+        setStatus("error");
+      }
+    } catch (error) {
+      setStatus("error");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#08080a] text-white selection:bg-indigo-500/30">
       {/* ===== NAV ===== */}
@@ -138,7 +176,7 @@ export default function Home() {
             },
             {
               step: "02",
-              title: "Загрузи 4 фото",
+              title: "Загрузи от 1 до 4 фото",
               desc: "Перед, бок, спина, расслабленная поза. Можно в зеркале с телефона",
             },
             {
@@ -247,25 +285,40 @@ export default function Home() {
             <p className="text-gray-400 mb-8">
               Оставь email — отправим приглашение в бету
             </p>
-            <form
-              className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mx-auto"
-              action="https://formspree.io/f/mzdkknwg"
-              method="POST"
-            >
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="your@email.com"
-                className="min-w-0 flex-1 px-4 py-3.5 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition"
-              />
-              <button
-                type="submit"
-                className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold transition shrink-0 cursor-pointer"
-              >
-                Получить доступ
-              </button>
-            </form>
+            
+            {status === "success" ? (
+              <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 font-medium">
+                🎉 Спасибо! Мы пришлем приглашение.
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mx-auto">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="your@email.com"
+                  disabled={status === "loading"}
+                  className="min-w-0 flex-1 px-4 py-3.5 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold transition shrink-0 cursor-pointer disabled:opacity-50 flex justify-center items-center min-w-[160px]"
+                >
+                  {status === "loading" ? (
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  ) : (
+                    "Получить доступ"
+                  )}
+                </button>
+              </form>
+            )}
+
+            {status === "error" && (
+              <p className="text-red-400 text-sm mt-3">Произошла ошибка. Попробуйте еще раз.</p>
+            )}
+
             <p className="text-xs text-gray-500 mt-4">
               Детальные оценки и рейтинг
             </p>
