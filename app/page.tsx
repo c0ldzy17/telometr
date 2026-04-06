@@ -263,7 +263,7 @@ export default function Home() {
               </button>
             </form>
             <p className="text-xs text-gray-500 mt-4">
-              3 оценки/неделю бесплатно • 10 оценок/месяц
+              Детальные оценки и рейтинг
             </p>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function Home() {
           </div>
           <span className="font-semibold text-sm">ТЕЛОМЕТР</span>
         </div>
-        <p className="text-sm text-gray-500">© 2025 Телометр. Все права защищены.</p>
+        <p className="text-sm text-gray-500">© 2026 Телометр. Все права защищены.</p>
       </footer>
     </div>
   );
