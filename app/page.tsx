@@ -85,16 +85,17 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6">
-            Узнай свой
+            Нейросеть
             <br />
             <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              уровень тела
+              оценит твоё тело
             </span>
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed">
-            Загрузи фото — нейросеть оценит пропорции, процент жира
-            и покажет где ты среди <span className="text-white font-medium">тысяч людей</span>.
+            Загрузи фото — узнай процент жира, пропорции
+            <br />
+            и свой уровень среди <span className="text-white font-medium">тысяч мужчин</span>.
           </p>
 
           <div className="flex gap-4 justify-center flex-wrap">
@@ -110,7 +111,7 @@ export default function Home() {
           </div>
 
           <p className="mt-6 text-sm text-gray-500">
-            До 3 оценок в неделю • Фото под защитой
+            За 30 секунд • Без регистрации • Фото под защитой
           </p>
         </div>
       </section>
