@@ -73,9 +73,9 @@ export default function Home() {
       {/* ===== HERO ===== */}
       <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-6 overflow-hidden">
         {/* Glow orbs */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] pointer-events-none">
-          <div className="absolute inset-0 bg-indigo-600/[0.07] rounded-full blur-[120px]" />
-          <div className="absolute top-20 -left-20 w-72 h-72 bg-purple-600/[0.05] rounded-full blur-[100px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[800px] h-[400px] sm:h-[600px] pointer-events-none">
+          <div className="absolute inset-0 bg-indigo-600/[0.07] rounded-full blur-[70px] sm:blur-[120px] transform-gpu" />
+          <div className="absolute top-10 -left-10 sm:top-20 sm:-left-20 w-48 sm:w-72 h-48 sm:h-72 bg-purple-600/[0.05] rounded-full blur-[50px] sm:blur-[100px] transform-gpu" />
         </div>
 
         <div className="relative z-10 max-w-3xl">
