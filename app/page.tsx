@@ -93,7 +93,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed px-2">
-            Загрузи фото — узнай процент жира, пропорции
+            Загрузи фото — узнай процент жира, пропорции{" "}
             <br className="hidden sm:block" />
             и свой уровень среди <span className="text-white font-medium whitespace-nowrap">тысяч мужчин</span>.
           </p>
