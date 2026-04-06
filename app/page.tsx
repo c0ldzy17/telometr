@@ -84,18 +84,18 @@ export default function Home() {
             Бета — бесплатный доступ
           </div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6">
             Нейросеть
             <br />
             <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              оценит твоё тело
+              оценит твоё&nbsp;тело
             </span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed px-2">
             Загрузи фото — узнай процент жира, пропорции
-            <br />
-            и свой уровень среди <span className="text-white font-medium">тысяч мужчин</span>.
+            <br className="hidden sm:block" />
+            и свой уровень среди <span className="text-white font-medium whitespace-nowrap">тысяч мужчин</span>.
           </p>
 
           <div className="flex gap-4 justify-center flex-wrap">
@@ -110,9 +110,13 @@ export default function Home() {
             </a>
           </div>
 
-          <p className="mt-6 text-sm text-gray-500">
-            За 30 секунд • Без регистрации • Фото под защитой
-          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-x-2 gap-y-1 text-sm text-gray-500">
+            <span className="whitespace-nowrap">За 30 секунд</span>
+            <span>•</span>
+            <span className="whitespace-nowrap">Без регистрации</span>
+            <span>•</span>
+            <span className="whitespace-nowrap">Фото под защитой</span>
+          </div>
         </div>
       </section>
 
