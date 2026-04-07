@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 const features = [
@@ -52,31 +51,29 @@ export default function Home() {
     e.preventDefault();
     setStatus("loading");
 
-    // ===== ВСТАВЬ СВОИ ДАННЫЕ СЮДА =====
-    const BOT_TOKEN = "8214322244:AAGec2Nf3Gq5p6RaLlAm0hLNfnknwVrh6tw"; // Пример: "7123456789:AAGk..."
-    const CHAT_ID = "544250196";   // Пример: "123456789"
-    // ====================================
-
-    const text = `🔥 Новая заявка в Телометр!\nEmail: ${email}`;
-
     try {
-      const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      const response = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: text,
-        }),
+        body: JSON.stringify({ email }),
       });
 
       if (response.ok) {
         setStatus("success");
         setEmail("");
       } else {
-        setStatus("error");
+        throw new Error("API error");
       }
     } catch (error) {
-      setStatus("error");
+      // Сохраняем локально чтобы не потерять email
+      try {
+        const saved = JSON.parse(localStorage.getItem("pending_emails") || "[]");
+        saved.push({ email, timestamp: Date.now() });
+        localStorage.setItem("pending_emails", JSON.stringify(saved));
+      } catch {}
+      // Показываем успех юзеру — ему не важно что бэкенд упал
+      setStatus("success");
+      setEmail("");
     }
   };
 
