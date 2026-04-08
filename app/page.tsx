@@ -389,7 +389,7 @@ export default function Home() {
           <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold">Т</div>
           <span className="font-semibold text-sm">ТЕЛОМЕТР</span>
         </div>
-        <p className="text-sm text-gray-500">© 2025 Телометр. Все права защищены.</p>
+        <p className="text-sm text-gray-500">© 2026 Телометр. Все права защищены.</p>
       </footer>
 
       {/* ===== MODAL ===== */}
