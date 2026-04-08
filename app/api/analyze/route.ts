@@ -44,6 +44,11 @@ export async function POST(req: Request) {
       });
     }
 
+    // === ПЕРЕКЛЮЧАТЕЛЬ ИНТЕЛЛЕКТА ===
+    // 0 = базовый дешевый режим (отработка на рефлексах)
+    // 500-1000 = режим раздумий (повышает Elo, но работает чуть дольше)
+    const thinkingTokens = 0;
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -52,10 +57,11 @@ export async function POST(req: Request) {
         "HTTP-Referer": "https://telometr.vercel.app",
       },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
+        model: "google/gemini-2.5-flash-lite-preview-09-2025",
         temperature: 0,
-        seed: 42,
         response_format: { type: "json_object" },
+        // Спред-оператор: добавит max_tokens_for_reasoning только если thinkingTokens > 0
+        ...(thinkingTokens > 0 && { max_tokens_for_reasoning: thinkingTokens }),
         messages: [
           {
             role: "system",
@@ -73,6 +79,7 @@ export async function POST(req: Request) {
 ПРАВИЛА ДЛЯ ТЕКСТА (СТРОГО):
 - "strong": Найди метрику с САМЫМ ВЫСОКИМ баллом. Напиши 1 предложение с похвалой именно этого аспекта. Никаких противоречий.
 - "weak": Найди метрику с САМЫМ НИЗКИМ баллом. Напиши 1 предложение с советом, как именно это улучшить. Не хвали в этом поле!
+- ЗАПРЕТ НА ЦИФРЫ: В текстах "strong" и "weak" КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать баллы, оценки или любые цифры (не пиши "на 96/100" или "оценка 80"). Используй ТОЛЬКО качественные прилагательные (например: "выдающаяся ширина", "отличный рельеф").
 
 ПРОВЕРКА НА АДЕКВАТНОСТЬ (КРИТИЧНО):
 Если на фото НЕТ человека (это животное, предмет, пустая комната), или фигуру абсолютно невозможно разглядеть:
@@ -81,7 +88,7 @@ export async function POST(req: Request) {
 
 В поле "strong" напиши: "Ошибка сканирования."
 
-В поле "weak" напиши: "На фото не распознан человек. Пожалуйста, загрузи нормальную фотографию."
+В поле "weak" напиши: "На фото сложно оценить параметры. Пожалуйста, загрузи нормальную фотографию."
 
 ОБЯЗАТЕЛЬНО верни ТОЛЬКО валидный JSON без markdown:
 {
@@ -112,7 +119,7 @@ export async function POST(req: Request) {
             ],
           },
         ],
-        max_tokens: 500,
+        max_tokens: 500, // Лимит на сам JSON-ответ
       }),
     });
 
@@ -135,9 +142,7 @@ export async function POST(req: Request) {
       // Сначала определяем, есть ли ошибка
       const isScanError = parsed.strong.includes("Ошибка") || parsed.weak.includes("распознан");
 
-      // Умный генератор шума: 
-      // Если ошибка -> выдает от 0 до 4.
-      // Если всё ок -> выдает от -2 до +2.
+      // Умный генератор шума
       const getNoise = (base64Str: string, salt: number, isError: boolean) => {
         const mod = (base64Str.length + salt) % 5;
         return isError ? mod : mod - 2; 
@@ -158,21 +163,44 @@ export async function POST(req: Request) {
         (m.shoulders_waist + m.body_fat + m.v_taper + m.symmetry + m.legs) / 5
       );
 
+      // -----------------------------------------------------
+      // ТОЧНЫЙ РАСЧЕТ ПЕРЦЕНТИЛЯ (Abramowitz & Stegun 7.1.26)
+      // Максимальная погрешность: 1.5 * 10^-7 (0.000015%)
+      // -----------------------------------------------------
       const mu = 50;
       const sigma = 15;
       const z = (overall - mu) / sigma;
-      const p = 1 / (1 + Math.exp(-1.702 * z));
+
+      const sign = z < 0 ? -1 : 1;
+      const absZ = Math.abs(z) / Math.sqrt(2);
+      const t = 1.0 / (1.0 + 0.3275911 * absZ);
       
+      const erf = 1.0 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-absZ * absZ);
+
+      // p - точная вероятность (CDF нормального распределения)
+      const p = 0.5 * (1.0 + sign * erf);
+      
+      // Переводим в процент людей, которые ХУЖЕ (например, 99.6%)
+      // И вычитаем из 100, чтобы получить "Топ X%" (например, Топ 0.4%)
       const topRaw = (1 - p) * 100;
+      
       let topFormatted;
 
-      if (topRaw > 10) {
+      // Динамическое форматирование для максимальной информативности
+      if (topRaw >= 10) {
+        // Для основной массы: Топ 12%, Топ 45% (десятые доли не нужны)
         topFormatted = Math.round(topRaw).toString();
-      } else if (topRaw > 1) {
+      } else if (topRaw >= 1) {
+        // Для элиты: Топ 5.4%, Топ 1.2% (одна цифра после запятой)
         topFormatted = topRaw.toFixed(1);
+      } else if (topRaw >= 0.01) {
+        // Для генетических мутантов: Топ 0.43%, Топ 0.05% (сохраняем ту самую разницу в 0.01%)
+        topFormatted = topRaw.toFixed(2);
       } else {
-        topFormatted = Math.max(0.01, topRaw).toFixed(2);
+        // Жесткий кап снизу, чтобы не показывать 0.00%
+        topFormatted = "<0.01"; 
       }
+      // -----------------------------------------------------
 
       const finalResult = {
         overall: overall,
