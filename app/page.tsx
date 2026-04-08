@@ -65,6 +65,11 @@ function getColor(value: number) {
   return "from-red-500 to-rose-400";
 }
 
+// Простая и надежная проверка email
+const isValidEmail = (email: string) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
 export default function Home() {
   // Email state
   const [email, setEmail] = useState("");
@@ -81,6 +86,9 @@ export default function Home() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  
+  // Состояние ошибок
+  const [errors, setErrors] = useState({ age: "", height: "", weight: "" });
 
   // Result state
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -91,38 +99,60 @@ export default function Home() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. Show the preview immediately so the user doesn't wait
     const reader = new FileReader();
     reader.onloadend = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
 
-    // 2. Compress the file in the background before saving to state
     const options = {
-      maxSizeMB: 1,           // Forces the file under 1MB
-      maxWidthOrHeight: 1024, // Resizes to 1024px max. (Perfect for AI vision)
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1024,
       useWebWorker: true,
-      fileType: "image/jpeg"  // CRITICAL: Converts iPhone HEIC photos to standard JPEG
+      fileType: "image/jpeg"
     };
 
     try {
-      // Compress it
       const compressedBlob = await imageCompression(file, options);
-      
-      // Convert Blob back to File object so your FormData doesn't break
       const compressedFile = new File([compressedBlob], file.name, {
         type: "image/jpeg",
         lastModified: Date.now(),
       });
-      
-      setPhoto(compressedFile); // Save the lightweight file to state
+      setPhoto(compressedFile);
     } catch (error) {
       console.error("Compression error:", error);
-      setPhoto(file); // Fallback to original if compression fails
+      setPhoto(file);
     }
   };
 
   const handleAnalyze = async () => {
     if (!photo || !age || !height || !weight) return;
+
+    // Сброс старых ошибок
+    let newErrors = { age: "", height: "", weight: "" };
+    let isValid = true;
+
+    // Парсим в числа
+    const numAge = parseInt(age, 10);
+    const numHeight = parseInt(height, 10);
+    const numWeight = parseInt(weight, 10);
+
+    // Валидация диапазонов
+    if (!numAge || numAge < 14 || numAge > 150) {
+      newErrors.age = "Укажи возраст от 14 до 150 лет";
+      isValid = false;
+    }
+    if (!numHeight || numHeight < 10 || numHeight > 250) {
+      newErrors.height = "Укажи рост от 10 до 250 см";
+      isValid = false;
+    }
+    if (!numWeight || numWeight < 20 || numWeight > 500) {
+      newErrors.weight = "Укажи вес от 20 до 500 кг";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+
+    // Стопаем если есть ошибки
+    if (!isValid) return;
 
     setStep("analyzing");
 
@@ -177,7 +207,6 @@ export default function Home() {
     }
   };
 
-  // Email submit for bottom CTA
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailStatus("loading");
@@ -372,8 +401,8 @@ export default function Home() {
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mx-auto">
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="your@email.com" disabled={emailStatus === "loading"}
                   className="min-w-0 flex-1 px-4 py-3.5 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition disabled:opacity-50" />
-                <button type="submit" disabled={emailStatus === "loading"}
-                  className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold transition shrink-0 cursor-pointer disabled:opacity-50 flex justify-center items-center min-w-[160px]">
+                <button type="submit" disabled={!isValidEmail(email) || emailStatus === "loading"}
+                  className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold transition shrink-0 cursor-pointer disabled:opacity-30 flex justify-center items-center min-w-[160px]">
                   {emailStatus === "loading" ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Получить доступ"}
                 </button>
               </form>
@@ -404,21 +433,64 @@ export default function Home() {
               <div>
                 <h2 className="text-2xl font-bold mb-6">Оценить телосложение</h2>
                 <div className="space-y-4">
+                  
+                  {/* ВОЗРАСТ */}
                   <div>
                     <label className="text-sm text-gray-400 mb-1 block">Возраст</label>
-                    <input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="24"
-                      className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500" />
+                    <input 
+                      type="text" 
+                      inputMode="numeric"
+                      maxLength={3}
+                      value={age} 
+                      onChange={(e) => {
+                        setAge(e.target.value.replace(/\D/g, ""));
+                        setErrors({ ...errors, age: "" });
+                      }} 
+                      placeholder="24"
+                      className={`w-full px-4 py-3 bg-white/[0.05] border rounded-xl text-white placeholder-gray-500 outline-none transition
+                        ${errors.age ? "border-red-500/60 focus:border-red-500" : "border-white/10 focus:border-indigo-500"}`} 
+                    />
+                    {errors.age && <p className="text-red-400 text-xs mt-1.5 ml-1">{errors.age}</p>}
                   </div>
+
+                  {/* РОСТ */}
                   <div>
                     <label className="text-sm text-gray-400 mb-1 block">Рост (см)</label>
-                    <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="182"
-                      className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500" />
+                    <input 
+                      type="text" 
+                      inputMode="numeric"
+                      maxLength={3}
+                      value={height} 
+                      onChange={(e) => {
+                        setHeight(e.target.value.replace(/\D/g, ""));
+                        setErrors({ ...errors, height: "" });
+                      }} 
+                      placeholder="182"
+                      className={`w-full px-4 py-3 bg-white/[0.05] border rounded-xl text-white placeholder-gray-500 outline-none transition
+                        ${errors.height ? "border-red-500/60 focus:border-red-500" : "border-white/10 focus:border-indigo-500"}`} 
+                    />
+                    {errors.height && <p className="text-red-400 text-xs mt-1.5 ml-1">{errors.height}</p>}
                   </div>
+
+                  {/* ВЕС */}
                   <div>
                     <label className="text-sm text-gray-400 mb-1 block">Вес (кг)</label>
-                    <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="78"
-                      className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500" />
+                    <input 
+                      type="text" 
+                      inputMode="numeric"
+                      maxLength={3}
+                      value={weight} 
+                      onChange={(e) => {
+                        setWeight(e.target.value.replace(/\D/g, ""));
+                        setErrors({ ...errors, weight: "" });
+                      }} 
+                      placeholder="78"
+                      className={`w-full px-4 py-3 bg-white/[0.05] border rounded-xl text-white placeholder-gray-500 outline-none transition
+                        ${errors.weight ? "border-red-500/60 focus:border-red-500" : "border-white/10 focus:border-indigo-500"}`} 
+                    />
+                    {errors.weight && <p className="text-red-400 text-xs mt-1.5 ml-1">{errors.weight}</p>}
                   </div>
+
                   <div>
                     <label className="text-sm text-gray-400 mb-1 block">Фото</label>
                     <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
@@ -435,6 +507,7 @@ export default function Home() {
                       </button>
                     )}
                   </div>
+
                   <button onClick={handleAnalyze} disabled={!photo || !age || !height || !weight}
                     className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl font-semibold text-lg transition">
                     Анализировать →
@@ -505,8 +578,8 @@ export default function Home() {
                     <div className="flex gap-2">
                       <input type="email" value={unlockEmail} onChange={(e) => setUnlockEmail(e.target.value)} placeholder="your@email.com"
                         className="flex-1 px-4 py-3 bg-white/[0.05] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500" />
-                      <button onClick={handleUnlock} disabled={!unlockEmail}
-                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 rounded-xl font-semibold transition">
+                      <button onClick={handleUnlock} disabled={!isValidEmail(unlockEmail) || emailStatus === "loading"}
+                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl font-semibold transition">
                         Открыть
                       </button>
                     </div>

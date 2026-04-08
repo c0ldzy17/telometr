@@ -12,6 +12,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
+    // Жесткая серверная валидация границ
+    const numAge = parseInt(age, 10);
+    const numHeight = parseInt(height, 10);
+    const numWeight = parseInt(weight, 10);
+
+    if (
+      isNaN(numAge) || numAge < 14 || numAge > 150 ||
+      isNaN(numHeight) || numHeight < 10 || numHeight > 250 ||
+      isNaN(numWeight) || numWeight < 20 || numWeight > 500
+    ) {
+      return NextResponse.json({ error: "Invalid parameters out of bounds" }, { status: 400 });
+    }
+
     const bytes = await file.arrayBuffer();
     const base64 = Buffer.from(bytes).toString("base64");
     const mimeType = file.type || "image/jpeg";
@@ -61,6 +74,15 @@ export async function POST(req: Request) {
 - "strong": Найди метрику с САМЫМ ВЫСОКИМ баллом. Напиши 1 предложение с похвалой именно этого аспекта. Никаких противоречий.
 - "weak": Найди метрику с САМЫМ НИЗКИМ баллом. Напиши 1 предложение с советом, как именно это улучшить. Не хвали в этом поле!
 
+ПРОВЕРКА НА АДЕКВАТНОСТЬ (КРИТИЧНО):
+Если на фото НЕТ человека (это животное, предмет, пустая комната), или фигуру абсолютно невозможно разглядеть:
+
+Выдай всем 5 метрикам оценку строго 0.
+
+В поле "strong" напиши: "Ошибка сканирования."
+
+В поле "weak" напиши: "На фото не распознан человек. Пожалуйста, загрузи нормальную фотографию."
+
 ОБЯЗАТЕЛЬНО верни ТОЛЬКО валидный JSON без markdown:
 {
   "metrics": {
@@ -103,48 +125,47 @@ export async function POST(req: Request) {
 
     const content = data.choices[0].message.content;
 
-    // Убираем возможные markdown бэктики
     const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
     try {
       const parsed = JSON.parse(cleaned);
       
-      // 1. Убиваем джиттер нейросети (квантуем до 5)
       const roundTo5 = (val: number) => Math.round(Number(val) / 5) * 5;
+      
+      // Сначала определяем, есть ли ошибка
+      const isScanError = parsed.strong.includes("Ошибка") || parsed.weak.includes("распознан");
 
-      // 2. Генерируем "органический" детерминированный шум (от -2 до +2)
-      const getNoise = (base64Str: string, salt: number) => {
-        return ((base64Str.length + salt) % 5) - 2; 
+      // Умный генератор шума: 
+      // Если ошибка -> выдает от 0 до 4.
+      // Если всё ок -> выдает от -2 до +2.
+      const getNoise = (base64Str: string, salt: number, isError: boolean) => {
+        const mod = (base64Str.length + salt) % 5;
+        return isError ? mod : mod - 2; 
       };
 
-      // Защита от выхода за границы 0-100
       const clamp = (val: number) => Math.max(0, Math.min(100, val));
 
-      // 3. Формируем красивые, "живые", но 100% стабильные метрики
+      // Формируем метрики с новым умным шумом
       const m = {
-        shoulders_waist: clamp(roundTo5(parsed.metrics.shoulders_waist) + getNoise(base64, 1)),
-        body_fat: clamp(roundTo5(parsed.metrics.body_fat) + getNoise(base64, 2)),
-        v_taper: clamp(roundTo5(parsed.metrics.v_taper) + getNoise(base64, 3)),
-        symmetry: clamp(roundTo5(parsed.metrics.symmetry) + getNoise(base64, 4)),
-        legs: clamp(roundTo5(parsed.metrics.legs) + getNoise(base64, 5))
+        shoulders_waist: clamp((isScanError ? 0 : roundTo5(parsed.metrics.shoulders_waist)) + getNoise(base64, 1, isScanError)),
+        body_fat: clamp((isScanError ? 0 : roundTo5(parsed.metrics.body_fat)) + getNoise(base64, 2, isScanError)),
+        v_taper: clamp((isScanError ? 0 : roundTo5(parsed.metrics.v_taper)) + getNoise(base64, 3, isScanError)),
+        symmetry: clamp((isScanError ? 0 : roundTo5(parsed.metrics.symmetry)) + getNoise(base64, 4, isScanError)),
+        legs: clamp((isScanError ? 0 : roundTo5(parsed.metrics.legs)) + getNoise(base64, 5, isScanError))
       };
 
-      // 4. Считаем честное среднее по УЖЕ ЖИВЫМ метрикам
       const overall = Math.round(
         (m.shoulders_waist + m.body_fat + m.v_taper + m.symmetry + m.legs) / 5
       );
 
-      // 5. Считаем честный перцентиль (Нормальное распределение)
       const mu = 50;
       const sigma = 15;
       const z = (overall - mu) / sigma;
       const p = 1 / (1 + Math.exp(-1.702 * z));
       
-      // Считаем сырой "Топ X%"
       const topRaw = (1 - p) * 100;
       let topFormatted;
 
-      // Динамическое форматирование
       if (topRaw > 10) {
         topFormatted = Math.round(topRaw).toString();
       } else if (topRaw > 1) {
@@ -153,7 +174,6 @@ export async function POST(req: Request) {
         topFormatted = Math.max(0.01, topRaw).toFixed(2);
       }
 
-      // 6. Формируем финальный объект
       const finalResult = {
         overall: overall,
         percentile: Math.round(p * 100),
