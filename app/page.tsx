@@ -39,6 +39,7 @@ const features = [
 type AnalysisResult = {
   overall: number;
   percentile: number;
+  topPercentage: string;
   metrics: {
     shoulders_waist: number;
     body_fat: number;
@@ -466,7 +467,7 @@ export default function Home() {
                   </div>
                   <div className="text-right">
                     <div className="inline-block px-3 py-1 bg-green-500/10 text-green-400 text-sm font-medium rounded-full">
-                      Топ {100 - result.percentile}%
+                      Топ {result.topPercentage}%
                     </div>
                   </div>
                 </div>
