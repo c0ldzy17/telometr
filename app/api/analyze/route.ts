@@ -7,6 +7,7 @@ export async function POST(req: Request) {
     const age = formData.get("age") as string;
     const height = formData.get("height") as string;
     const weight = formData.get("weight") as string;
+    const gender = (formData.get("gender") as string) || "male";
 
     if (!file || !age || !height || !weight) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -32,40 +33,13 @@ export async function POST(req: Request) {
     const BOT_TOKEN = process.env.BOT_TOKEN;
     const CHAT_ID = process.env.CHAT_ID;
 
-    // Логируем в Telegram факт загрузки
-    if (BOT_TOKEN && CHAT_ID) {
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: `📊 Новый анализ!\nВозраст: ${age}, Рост: ${height}, Вес: ${weight}`,
-        }),
-      });
-    }
-
     // === ПЕРЕКЛЮЧАТЕЛЬ ИНТЕЛЛЕКТА ===
     // 0 = базовый дешевый режим (отработка на рефлексах)
     // 500-1000 = режим раздумий (повышает Elo, но работает чуть дольше)
     const thinkingTokens = 0;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "https://telometr.vercel.app",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite-preview-09-2025",
-        temperature: 0,
-        response_format: { type: "json_object" },
-        // Спред-оператор: добавит max_tokens_for_reasoning только если thinkingTokens > 0
-        ...(thinkingTokens > 0 && { max_tokens_for_reasoning: thinkingTokens }),
-        messages: [
-          {
-            role: "system",
-            content: `Ты — строгий эксперт по оценке мужского телосложения.
+    // === ДИНАМИЧЕСКИЙ ПРОМПТ ===
+    const systemPromptMale = `Ты — строгий эксперт по оценке мужского телосложения.
 Тебе дают фото мужчины и его параметры (возраст, рост, вес).
 Оцени 5 базовых метрик по шкале от 0 до 100.
 
@@ -101,14 +75,66 @@ export async function POST(req: Request) {
   },
   "strong": "текст",
   "weak": "текст"
-}`,
+}`;
+
+    const systemPromptFemale = `Ты — строгий эксперт по оценке женской фигуры.
+Тебе дают фото девушки и её параметры (возраст, рост, вес).
+Оцени 5 базовых эстетических метрик по шкале от 0 до 100.
+
+ЖЕСТКИЕ ГАЙДЛАЙНЫ ПО ОЦЕНКАМ (ВНИМАНИЕ: Ключи JSON остаются техническими, но оценивай их по женским стандартам):
+1. shoulders_waist (Талия к бедрам): 90-100 = идеальное соотношение "песочные часы" (узкая талия, выразительные бедра), 70-89 = спортивные и подтянутые пропорции, 40-69 = обычная фигура (прямоугольник), 0-39 = талия шире бедер.
+2. body_fat (Процент жира/Тонус): 90-100 = фитнес-модель (виден рельеф живота, 16-20%), 70-89 = стройная и подтянутая (21-24%), 40-69 = обычная норма (25-30%), 0-39 = лишний вес. Выдавай балл эстетичности, а не сам процент жира!
+3. v_taper (Силуэт Песочные часы): 90-100 = ярко выраженные женственные изгибы, 40-69 = обычный силуэт, 0-39 = отсутствие изгибов.
+4. symmetry (Симметрия): 90-100 = идеальный баланс и осанка, 40-69 = есть асимметрии.
+5. legs (Ноги и ягодицы): 90-100 = стройные, подтянутые ноги и эстетичные ягодицы, 40-69 = обычные ноги, 0-39 = проблемные зоны.
+
+ПРАВИЛА ДЛЯ ТЕКСТА (СТРОГО):
+- "strong": Найди метрику с САМЫМ ВЫСОКИМ баллом. Напиши 1 предложение с похвалой именно этого аспекта. Никаких противоречий.
+- "weak": Найди метрику с САМЫМ НИЗКИМ баллом. Напиши 1 предложение с мягким советом, как именно это улучшить. Не хвали в этом поле!
+- ЗАПРЕТ НА ЦИФРЫ: В текстах "strong" и "weak" КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать баллы, оценки или любые цифры. Используй ТОЛЬКО качественные прилагательные (например: "изящная талия", "отличный тонус").
+
+ПРОВЕРКА НА АДЕКВАТНОСТЬ (КРИТИЧНО):
+Если на фото НЕТ человека, выдай всем метрикам 0. В "strong" напиши: "Ошибка сканирования." В "weak" напиши: "На фото сложно оценить параметры. Пожалуйста, загрузи нормальную фотографию."
+
+ОБЯЗАТЕЛЬНО верни ТОЛЬКО валидный JSON без markdown:
+{
+  "metrics": {
+    "shoulders_waist": число 0-100,
+    "body_fat": число 0-100,
+    "v_taper": число 0-100,
+    "symmetry": число 0-100,
+    "legs": число 0-100
+  },
+  "strong": "текст",
+  "weak": "текст"
+}`;
+
+    const activeSystemPrompt = gender === "female" ? systemPromptFemale : systemPromptMale;
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "HTTP-Referer": "https://telometr.vercel.app",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite-preview-09-2025",
+        temperature: 0,
+        response_format: { type: "json_object" },
+        // Спред-оператор: добавит max_tokens_for_reasoning только если thinkingTokens > 0
+        ...(thinkingTokens > 0 && { max_tokens_for_reasoning: thinkingTokens }),
+        messages: [
+          {
+            role: "system",
+            content: activeSystemPrompt,
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Мужчина, ${age} лет, рост ${height} см, вес ${weight} кг. Оцени телосложение:`,
+                text: `${gender === "female" ? "Девушка" : "Мужчина"}, ${age} лет, рост ${height} см, вес ${weight} кг. Оцени телосложение:`,
               },
               {
                 type: "image_url",
@@ -210,6 +236,34 @@ export async function POST(req: Request) {
         strong: parsed.strong,
         weak: parsed.weak
       };
+
+      // --- ОТПРАВКА ДЕТАЛЬНОГО ОТЧЕТА В TELEGRAM ---
+      if (BOT_TOKEN && CHAT_ID) {
+        const tgMessage = `📊 Новый анализ!
+Пол: ${gender === "male" ? "Мужчина" : "Девушка"}
+Возраст: ${age} | Рост: ${height} | Вес: ${weight}
+
+🏆 Рейтинг: ${overall}/100 (Топ ${topFormatted}%)
+- ${gender === "male" ? "Плечи/Талия" : "Талия/Бедра"}: ${m.shoulders_waist}
+- Процент жира: ${m.body_fat}
+- ${gender === "male" ? "V-taper" : "Песочные часы"}: ${m.v_taper}
+- Симметрия: ${m.symmetry}
+- Ноги: ${m.legs}
+
+💪 Сильная: ${parsed.strong}
+🎯 Слабая: ${parsed.weak}`;
+
+        // Отправляем асинхронно, чтобы не задерживать ответ юзеру
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: tgMessage,
+          }),
+        }).catch(err => console.error("TG Log Error:", err));
+      }
+      // ----------------------------------------------
 
       return NextResponse.json(finalResult);
     } catch {
