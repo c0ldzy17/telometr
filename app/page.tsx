@@ -266,21 +266,25 @@ export default function Home() {
       <nav className={`fixed top-0 w-full z-50 backdrop-blur-2xl border-b ${
         gender === "male" ? "bg-[#f7f7f5]/80 border-black/[0.06]" : "bg-[#08080a]/70 border-white/[0.06]"
       }`}>
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2.5">
+        {/* Добавили relative, чтобы абсолютно центрировать свитчер */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center relative">
+          
+          {/* ЛОГОТИП */}
+          <div className="flex items-center gap-2.5 z-10">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
               gender === "male" ? "bg-gradient-to-br from-[#9c990e] to-[#6ccc15] text-black" : "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
             }`}>
               Т
             </div>
-            <span className="text-lg font-bold tracking-tight">ТЕЛОМЕТР</span>
+            {/* Прячем текст на мобилках (hidden), показываем начиная от планшетов (sm:block) */}
+            <span className="text-lg font-bold tracking-tight hidden sm:block">ТЕЛОМЕТР</span>
           </div>
 
-          {/* === СВИТЧЕР ПОЛА === */}
-          <div className={`flex p-1 rounded-full ${gender === "male" ? "bg-black/5" : "bg-white/10"}`}>
+          {/* === СВИТЧЕР ПОЛА (Идеально по центру) === */}
+          <div className={`absolute left-1/2 -translate-x-1/2 flex p-1 rounded-full z-10 ${gender === "male" ? "bg-black/5" : "bg-white/10"}`}>
             <button 
               onClick={() => { setGender("male"); setResult(null); setStep("form"); }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium ${
+              className={`px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium ${
                 gender === "male" ? "bg-white text-black shadow-sm" : "text-gray-500 hover:text-white"
               }`}
             >
@@ -288,7 +292,7 @@ export default function Home() {
             </button>
             <button 
               onClick={() => { setGender("female"); setResult(null); setStep("form"); }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium ${
+              className={`px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium ${
                 gender === "female" ? "bg-white text-black shadow-sm" : "text-gray-500 hover:text-black"
               }`}
             >
@@ -296,7 +300,8 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="hidden md:flex items-center gap-8 text-sm">
+          {/* МЕНЮ СПРАВА */}
+          <div className="hidden md:flex items-center gap-8 text-sm z-10">
             <a href="#how" className={gender === "male" ? "text-gray-500 hover:text-black" : "text-gray-400 hover:text-white"}>Как работает</a>
             <a href="#demo" className={gender === "male" ? "text-gray-500 hover:text-black" : "text-gray-400 hover:text-white"}>Пример</a>
             <button
@@ -322,7 +327,7 @@ export default function Home() {
           }`} />
         </div>
 
-        <div className="relative z-10 max-w-3xl">
+        <div className="relative z-10 max-w-3xl -mt-12 sm:-mt-20">
           <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-sm mb-8 ${
             gender === "male" ? "border-black/10 bg-black/[0.03] text-gray-600" : "border-white/10 bg-white/[0.03] text-gray-400"
           }`}>
@@ -342,7 +347,7 @@ export default function Home() {
             </span>
           </h1>
 
-          <p className={`text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed px-2 ${
+          <p className={`text-lg sm:text-xl max-w-xl mx-auto mb-14 leading-relaxed px-2 ${
             gender === "male" ? "text-gray-600" : "text-gray-400"
           }`}>
             Загрузи фото — узнай процент жира, пропорции{" "}
@@ -375,7 +380,7 @@ export default function Home() {
       </section>
 
       {/* ===== HOW IT WORKS ===== */}
-      <section id="how" className="max-w-5xl mx-auto px-6 py-28">
+      <section id="how" className="max-w-5xl mx-auto px-6 pb-28 pt-10 -mt-12 sm:-mt-24 relative z-20">
         <p className={`text-center text-sm font-semibold uppercase tracking-widest mb-4 ${
           gender === "male" ? "text-[#7e7307]" : "text-indigo-400"
         }`}>Как работает</p>
