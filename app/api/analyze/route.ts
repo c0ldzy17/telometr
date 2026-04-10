@@ -176,13 +176,19 @@ export async function POST(req: Request) {
 
       const clamp = (val: number) => Math.max(0, Math.min(100, val));
 
+      // Вспомогательная функция: возвращает 0 при ошибке, иначе округляет и дает +10, если скор >= 20
+      const getBaseScore = (score) => {
+        if (isScanError) return 0;
+        return roundTo5(score) + (score >= 20 ? 10 : 0);
+      };
+
       // Формируем метрики с новым умным шумом
       const m = {
-        shoulders_waist: clamp((isScanError ? 0 : roundTo5(parsed.metrics.shoulders_waist)) + getNoise(base64, 1, isScanError)),
-        body_fat: clamp((isScanError ? 0 : roundTo5(parsed.metrics.body_fat)) + getNoise(base64, 2, isScanError)),
-        v_taper: clamp((isScanError ? 0 : roundTo5(parsed.metrics.v_taper)) + getNoise(base64, 3, isScanError)),
-        symmetry: clamp((isScanError ? 0 : roundTo5(parsed.metrics.symmetry)) + getNoise(base64, 4, isScanError)),
-        legs: clamp((isScanError ? 0 : roundTo5(parsed.metrics.legs)) + getNoise(base64, 5, isScanError))
+        shoulders_waist: clamp(getBaseScore(parsed.metrics.shoulders_waist) + getNoise(base64, 1, isScanError)),
+        body_fat: clamp(getBaseScore(parsed.metrics.body_fat) + getNoise(base64, 2, isScanError)),
+        v_taper: clamp(getBaseScore(parsed.metrics.v_taper) + getNoise(base64, 3, isScanError)),
+        symmetry: clamp(getBaseScore(parsed.metrics.symmetry) + getNoise(base64, 4, isScanError)),
+        legs: clamp(getBaseScore(parsed.metrics.legs) + getNoise(base64, 5, isScanError))
       };
 
       const overall = Math.round(
