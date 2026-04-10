@@ -14,20 +14,17 @@ export async function POST(req: Request) {
 
     const text = `🔥 Новая заявка в Телометр!\nEmail: ${email}`;
 
-    const tgResponse = await fetch(
-      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: CHAT_ID, text }),
-      }
-    );
+    // Используем публичный прокси для обхода блокировок Timeweb
+    const TG_API = process.env.TG_PROXY || "https://api.telegram.org";
 
-    if (!tgResponse.ok) {
-      console.error("Telegram API error:", await tgResponse.text());
-      return NextResponse.json({ ok: false }, { status: 500 });
-    }
+    fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: CHAT_ID, text }),
+    })
+    .catch(err => console.error("🌐 Сетевая ошибка:", err));
 
+    // Мгновенно отдаем успех на фронтенд (никаких тормозов)
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Subscribe error:", error);

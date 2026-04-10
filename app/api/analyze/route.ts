@@ -253,8 +253,11 @@ export async function POST(req: Request) {
 💪 Сильная: ${parsed.strong}
 🎯 Слабая: ${parsed.weak}`;
 
+        // Используем публичный прокси для обхода блокировок Timeweb
+        const TG_API = process.env.TG_PROXY || "https://api.telegram.org";
+
         // Отправляем асинхронно, чтобы не задерживать ответ юзеру
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
