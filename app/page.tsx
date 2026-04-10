@@ -496,13 +496,13 @@ export default function Home() {
             gender === "male" ? "from-[#b0b91a]/[0.05] to-transparent" : "from-indigo-600/[0.05] to-transparent"
           }`} />
           <div className="relative">
-            <h2 className="text-3xl font-bold mb-3">Готов узнать свой уровень?</h2>
-            <p className={`mb-8 ${gender === "male" ? "text-gray-600" : "text-gray-400"}`}>Оставь email — отправим приглашение в бету</p>
+            <h2 className="text-3xl font-bold mb-3">Впереди много интересного!</h2>
+            <p className={`mb-8 ${gender === "male" ? "text-gray-600" : "text-gray-400"}`}>Оставь email — будем держать в курсе</p>
             {emailStatus === "success" && !showModal ? (
               <div className={`p-4 rounded-xl text-sm font-medium ${
                 gender === "male" ? "bg-green-600/10 border border-green-600/20 text-green-700" : "bg-green-500/10 border border-green-500/20 text-green-400"
               }`}>
-                🎉 Спасибо! Мы пришлем приглашение.
+                🎉 Спасибо! Жди обновлений
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mx-auto">
@@ -516,11 +516,11 @@ export default function Home() {
                   className={`px-6 py-3.5 rounded-xl font-semibold transition hover:-translate-y-0.5 shrink-0 cursor-pointer disabled:opacity-30 flex justify-center items-center min-w-[160px] ${
                     gender === "male" ? "bg-[#b0b91a] hover:bg-[#9c990e] text-black" : "bg-indigo-600 hover:bg-indigo-500 text-white"
                   }`}>
-                  {emailStatus === "loading" ? <span className={`w-5 h-5 border-2 border-t-transparent rounded-full animate-spin ${gender === "male" ? "border-black/30 border-t-black" : "border-white/30 border-t-white"}`} /> : "Получить доступ"}
+                  {emailStatus === "loading" ? <span className={`w-5 h-5 border-2 border-t-transparent rounded-full animate-spin ${gender === "male" ? "border-black/30 border-t-black" : "border-white/30 border-t-white"}`} /> : "Подтвердить"}
                 </button>
               </form>
             )}
-            <p className={`text-xs mt-4 ${gender === "male" ? "text-gray-500" : "text-gray-500"}`}>Детальные оценки и рейтинг</p>
+            <p className={`text-xs mt-4 ${gender === "male" ? "text-gray-500" : "text-gray-500"}`}>Новые функции и обновления</p>
           </div>
         </div>
       </section>
