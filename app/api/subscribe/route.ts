@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     // Используем публичный прокси для обхода блокировок Timeweb
     const TG_API = process.env.TG_PROXY || "https://api.telegram.org";
 
-    fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
+    await fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: CHAT_ID, text }),

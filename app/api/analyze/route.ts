@@ -263,7 +263,7 @@ export async function POST(req: Request) {
         const TG_API = process.env.TG_PROXY || "https://api.telegram.org";
 
         // Отправляем асинхронно, чтобы не задерживать ответ юзеру
-        fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
+        await fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
