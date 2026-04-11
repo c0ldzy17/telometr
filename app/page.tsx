@@ -75,14 +75,14 @@ const metricLabelsFemale: Record<string, string> = {
 function getColor(value: number, gender: "male" | "female") {
   // Для девушек (темный фон) - оригинальные цвета
   if (gender === "female") {
-    if (value >= 75) return "from-green-500 to-emerald-400";
-    if (value >= 50) return "from-yellow-500 to-amber-400";
+    if (value >= 65) return "from-green-500 to-emerald-400";
+    if (value >= 40) return "from-yellow-500 to-amber-400";
     return "from-red-500 to-rose-400";
   }
   
   // Для парней (светлый фон) - математическая инверсия оттенков
-  if (value >= 75) return "from-green-500 to-emerald-600";
-  if (value >= 50) return "from-yellow-500 to-amber-600";
+  if (value >= 65) return "from-green-500 to-emerald-600";
+  if (value >= 40) return "from-yellow-500 to-amber-600";
   return "from-red-500 to-rose-600";
 }
 
