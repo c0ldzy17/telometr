@@ -11,8 +11,15 @@ declare global {
 }
 const METRIKA_ID = 108499203;
 const reachGoal = (target: string) => {
+  // 1. Отправка в Яндекс.Метрику
   if (typeof window !== "undefined" && window.ym) {
-    window.ym(METRIKA_ID, 'reachGoal', target);
+    window.ym(METRIKA_ID, 'reachGoal', target); // Убедись, что переменная METRIKA_ID у тебя есть
+  }
+  
+  // 2. Отправка в VK Пиксель
+  if (typeof window !== "undefined") {
+    const _tmr = (window as any)._tmr || ((window as any)._tmr = []);
+    _tmr.push({ id: "3757597", type: "reachGoal", goal: target });
   }
 };
 // -------------------------
