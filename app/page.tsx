@@ -3,6 +3,20 @@
 import { useState, useRef, useEffect } from "react";
 import imageCompression from 'browser-image-compression';
 
+// --- НАСТРОЙКА МЕТРИКИ ---
+declare global {
+  interface Window {
+    ym: (id: number, action: string, target: string) => void;
+  }
+}
+const METRIKA_ID = 108499203;
+const reachGoal = (target: string) => {
+  if (typeof window !== "undefined" && window.ym) {
+    window.ym(METRIKA_ID, 'reachGoal', target);
+  }
+};
+// -------------------------
+
 const features = [
   {
     icon: "📸",
@@ -175,6 +189,7 @@ export default function Home() {
     if (!isValid) return;
 
     setStep("analyzing");
+    reachGoal('analysis_start');
 
     const formData = new FormData();
     formData.append("photo", photo);
@@ -194,9 +209,11 @@ export default function Home() {
       const data = await response.json();
       setResult(data);
       setStep("result");
+      reachGoal('analysis_success');
     } catch (error) {
       alert("Ошибка анализа. Попробуй другое фото.");
       setStep("form");
+      reachGoal('analysis_error');
     }
   };
 
@@ -214,6 +231,7 @@ export default function Home() {
       if (response.ok) {
         setUnlocked(true);
         setEmailStatus("success");
+        reachGoal('email_result');
       } else {
         throw new Error();
       }
@@ -225,6 +243,7 @@ export default function Home() {
       } catch {}
       setUnlocked(true);
       setEmailStatus("success");
+      reachGoal('email_result');
     }
   };
 
@@ -242,6 +261,7 @@ export default function Home() {
       if (response.ok) {
         setEmailStatus("success");
         setEmail("");
+        reachGoal('email_footer');
       } else {
         throw new Error("API error");
       }
@@ -253,6 +273,7 @@ export default function Home() {
       } catch {}
       setEmailStatus("success");
       setEmail("");
+      reachGoal('email_footer');
     }
   };
 
@@ -305,7 +326,7 @@ export default function Home() {
             <a href="#how" className={gender === "male" ? "text-gray-500 hover:text-black" : "text-gray-400 hover:text-white"}>Как работает</a>
             <a href="#demo" className={gender === "male" ? "text-gray-500 hover:text-black" : "text-gray-400 hover:text-white"}>Пример</a>
             <button
-              onClick={() => { setShowModal(true); setStep("form"); }}
+              onClick={() => { setShowModal(true); setStep("form"); reachGoal('click_start');}}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 gender === "male" ? "bg-black/5 hover:bg-black/10 text-black" : "bg-white/10 hover:bg-white/15 text-white"
               }`}
@@ -356,7 +377,7 @@ export default function Home() {
           </p>
 
           <button
-            onClick={() => { setShowModal(true); setStep("form"); }}
+            onClick={() => { setShowModal(true); setStep("form"); reachGoal('click_start');}}
             className={`group px-8 py-4 rounded-2xl font-semibold text-lg transition hover:-translate-y-0.5 hover:shadow-xl ${
               gender === "male" 
                 ? "bg-[#b0b91a] hover:bg-[#9c990e] text-black hover:shadow-[#b0b91a]/25" 
