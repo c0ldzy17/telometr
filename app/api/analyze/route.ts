@@ -177,7 +177,7 @@ export async function POST(req: Request) {
       const clamp = (val: number) => Math.max(0, Math.min(100, val));
 
       // Вспомогательная функция: возвращает 0 при ошибке, иначе округляет и дает +10, если скор >= 20
-      const getBaseScore = (score) => {
+      const getBaseScore = (score: number) => {
         if (isScanError) return 0;
         return roundTo5(score) + (score >= 20 ? 10 : 0);
       };
