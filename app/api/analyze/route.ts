@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 
 export async function POST(req: Request) {
   try {
@@ -259,18 +260,23 @@ export async function POST(req: Request) {
 💪 Сильная: ${parsed.strong}
 🎯 Слабая: ${parsed.weak}`;
 
-        // Используем публичный прокси для обхода блокировок Timeweb
         const TG_API = process.env.TG_PROXY || "https://api.telegram.org";
 
-        // Отправляем асинхронно, чтобы не задерживать ответ юзеру
-        await fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: CHAT_ID,
-            text: tgMessage,
-          }),
-        }).catch(err => console.error("TG Log Error:", err));
+        // Магия Vercel: Отправка логов в фоне!
+        after(async () => {
+          try {
+            await fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: tgMessage,
+              }),
+            });
+          } catch (err) {
+            console.error("TG Log Error:", err);
+          }
+        });
       }
       // ----------------------------------------------
 

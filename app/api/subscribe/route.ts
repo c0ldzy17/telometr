@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 
 export async function POST(req: Request) {
   try {
@@ -14,15 +15,20 @@ export async function POST(req: Request) {
 
     const text = `🔥 Новая заявка в Телометр!\nEmail: ${email}`;
 
-    // Используем публичный прокси для обхода блокировок Timeweb
     const TG_API = process.env.TG_PROXY || "https://api.telegram.org";
 
-    await fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT_ID, text }),
-    })
-    .catch(err => console.error("🌐 Сетевая ошибка:", err));
+    // Фоновая отправка в Vercel
+    after(async () => {
+      try {
+        await fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: CHAT_ID, text }),
+        });
+      } catch (err) {
+        console.error("🌐 Сетевая ошибка:", err);
+      }
+    });
 
     // Мгновенно отдаем успех на фронтенд (никаких тормозов)
     return NextResponse.json({ ok: true });
