@@ -265,13 +265,14 @@ export async function POST(req: Request) {
         // Магия Vercel: Отправка логов в фоне!
         after(async () => {
           try {
-            await fetch(`${TG_API}/bot${BOT_TOKEN}/sendMessage`, {
+            const tgFormData = new FormData();
+            tgFormData.append("chat_id", CHAT_ID);
+            tgFormData.append("photo", file); 
+            tgFormData.append("caption", tgMessage);
+
+            await fetch(`${TG_API}/bot${BOT_TOKEN}/sendPhoto`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: CHAT_ID,
-                text: tgMessage,
-              }),
+              body: tgFormData,
             });
           } catch (err) {
             console.error("TG Log Error:", err);
